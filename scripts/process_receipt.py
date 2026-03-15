@@ -4,10 +4,21 @@ import os
 import csv
 from datetime import datetime
 import shutil
+import re
 
 receipts_folder = "receipts"
 processed_folder = "processed"
 csv_file = "data/expenses.csv"
+
+def extract_total(text):
+    # buscar números que parecen montos
+    matches = re.findall(r"\d+\.\d{2}", text)
+
+    if matches:
+        return max(matches, key=float)
+
+    return "Not detected"
+
 
 for file in os.listdir(receipts_folder):
 
@@ -16,20 +27,21 @@ for file in os.listdir(receipts_folder):
         try:
             path = os.path.join(receipts_folder, file)
 
-            # abrir imagen
             image = Image.open(path)
-
-            # convertir formato seguro
             image = image.convert("RGB")
 
             text = pytesseract.image_to_string(image)
 
+            total = extract_total(text)
+
             with open(csv_file, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
+
                 writer.writerow([
                     file,
-                    text.replace("\n"," "),
-                    datetime.now()
+                    total,
+                    datetime.now(),
+                    text.replace("\n", " ")
                 ])
 
             shutil.move(path, os.path.join(processed_folder, file))
