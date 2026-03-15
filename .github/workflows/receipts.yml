@@ -1,0 +1,42 @@
+name: Process Expense Receipts
+
+on:
+  push:
+    paths:
+      - "receipts/**"
+
+jobs:
+
+  process-receipts:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install pytesseract pillow
+
+      - name: Install OCR engine
+        run: |
+          sudo apt update
+          sudo apt install tesseract-ocr -y
+
+      - name: Run receipt processor
+        run: python scripts/process_receipt.py
+
+      - name: Commit processed files
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "Processed receipts"
+          git push
